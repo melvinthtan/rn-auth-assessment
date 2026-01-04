@@ -28,9 +28,11 @@ Intercept fetch requests for auth headers
 
 ## Screenshots
 
-![Demo screenshot 1](assets-readme/ss1.png)
-![Demo screenshot 2](assets-readme/ss2.png)
-![Demo screenshot 3](assets-readme/ss3.png)
+<img src="assets-readme/ss1.png" alt="Demo screenshot 1" height="200">
+
+<img src="assets-readme/ss2.png" alt="Demo screenshot 1" height="200">
+
+<img src="assets-readme/ss3.png" alt="Demo screenshot 1" height="200">
 
 ## Get started
 
