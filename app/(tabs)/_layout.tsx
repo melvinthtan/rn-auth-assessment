@@ -1,33 +1,65 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
+import { Tabs } from "expo-router";
+import React, { useContext, useEffect } from "react";
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { HapticTab } from "@/components/haptic-tab";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import AuthContext from "@/contexts/AuthContext";
+import { useThemeColor } from "@/hooks/use-theme-color";
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const { authenticate } = useContext(AuthContext);
+
+  const tabBackgroundColor = useThemeColor({}, "background");
+  const borderColor = useThemeColor({}, "surface");
+  const tabActiveColor = useThemeColor({}, "tabIconSelected");
+  const tabInactiveColor = useThemeColor({}, "tabIconDefault");
+
+  useEffect(() => {
+    authenticate?.mutate();
+  }, []);
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: tabActiveColor,
+        tabBarInactiveTintColor: tabInactiveColor,
         headerShown: false,
         tabBarButton: HapticTab,
-      }}>
+        tabBarStyle: {
+          backgroundColor: tabBackgroundColor,
+          borderTopColor: borderColor,
+          borderTopWidth: 2,
+          paddingTop: 10,
+          height: 100,
+        },
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: "Catch",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="cricket.ball.fill" color={color} />
+          ),
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="list"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: "List",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="list.triangle" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Profile",
+          headerShown: false,
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="gearshape.fill" color={color} />
+          ),
         }}
       />
     </Tabs>

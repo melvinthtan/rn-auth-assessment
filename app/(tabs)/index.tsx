@@ -1,98 +1,275 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { catchPoke } from "@/api/poke";
+import ParallaxScrollView from "@/components/parallax-scroll-view";
+import ThemedButton from "@/components/themed-button";
+import { ThemedText } from "@/components/themed-text";
+import AuthContext from "@/contexts/AuthContext";
+import { useThemeColor } from "@/hooks/use-theme-color";
+import { capitalizeFirstLetter } from "@/libs/capitalizeFirstLetter";
+import { useMutation } from "@tanstack/react-query";
+import { Image } from "expo-image";
+import { useContext } from "react";
+import { Pressable, View } from "react-native";
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+export default function Catch() {
+  const { user } = useContext(AuthContext);
 
-export default function HomeScreen() {
+  const backgroundColor = useThemeColor({}, "surface");
+
+  const scale = useSharedValue(1);
+  const opacity = useSharedValue(1);
+  const rotation = useSharedValue(0);
+  const spriteOverlayOpacity = useSharedValue(1);
+  const spriteOpacity = useSharedValue(0);
+
+  const {
+    mutate: catchMutate,
+    isPending,
+    data,
+    reset,
+  } = useMutation({
+    mutationKey: ["catchPoke"],
+    mutationFn: catchPoke,
+    onSuccess: () => {
+      animateCaught();
+    },
+  });
+
+  const handleCatchPress = () => {
+    if (user) {
+      animateTwitching();
+      catchMutate({ userId: user.id });
+    }
+  };
+
+  const animateCaught = () => {
+    scale.value = withTiming(3, {
+      duration: 500,
+      easing: Easing.inOut(Easing.ease),
+    });
+
+    opacity.value = withTiming(0, {
+      duration: 500,
+      easing: Easing.inOut(Easing.ease),
+    });
+
+    rotation.value = withTiming(0, {
+      duration: 100,
+      easing: Easing.inOut(Easing.ease),
+    });
+  };
+
+  const animateSprite = () => {
+    spriteOverlayOpacity.value = withTiming(0, {
+      duration: 2000,
+      easing: Easing.inOut(Easing.ease),
+    });
+
+    spriteOpacity.value = withTiming(1, {
+      duration: 2000,
+      easing: Easing.inOut(Easing.ease),
+    });
+  };
+
+  const animateTwitching = () => {
+    scale.value = withRepeat(
+      withSequence(
+        withTiming(1.05, {
+          duration: 700,
+          easing: Easing.inOut(Easing.ease),
+        }),
+        withTiming(1, {
+          duration: 700,
+          easing: Easing.inOut(Easing.ease),
+        })
+      ),
+      -1,
+      false
+    );
+
+    opacity.value = withRepeat(
+      withSequence(
+        withTiming(0.3, {
+          duration: 700,
+          easing: Easing.inOut(Easing.ease),
+        }),
+        withTiming(1, {
+          duration: 700,
+          easing: Easing.inOut(Easing.ease),
+        })
+      ),
+      -1,
+      false
+    );
+
+    rotation.value = withRepeat(
+      withSequence(
+        withTiming(-10, {
+          duration: 100,
+          easing: Easing.inOut(Easing.ease),
+        }),
+        withTiming(10, {
+          duration: 100,
+          easing: Easing.inOut(Easing.ease),
+        }),
+        withTiming(-10, {
+          duration: 100,
+          easing: Easing.inOut(Easing.ease),
+        }),
+        withTiming(0, {
+          duration: 100,
+          easing: Easing.inOut(Easing.ease),
+        }),
+        withTiming(0, {
+          duration: 1000,
+          easing: Easing.inOut(Easing.ease),
+        })
+      ),
+      -1,
+      true
+    );
+  };
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ scale: scale.value }, { rotateZ: `${rotation.value}deg` }],
+  }));
+
+  const spriteOverlayAnimatedStyle = useAnimatedStyle(() => ({
+    position: "absolute",
+    opacity: spriteOverlayOpacity.value,
+  }));
+
+  const spriteAnimatedStyle = useAnimatedStyle(() => ({
+    position: "absolute",
+    opacity: spriteOpacity.value,
+  }));
+
+  const caughtTextAnimatedSyle = useAnimatedStyle(() => ({
+    position: "absolute",
+    top: -50,
+    opacity: spriteOpacity.value,
+    alignSelf: "center",
+    left: "50%",
+  }));
+
+  const catchBtnAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: spriteOpacity.value,
+  }));
+
+  const handleCatchAgainPress = () => {
+    reset();
+
+    scale.value = 1;
+    opacity.value = 1;
+    rotation.value = 0;
+    spriteOverlayOpacity.value = 1;
+    spriteOpacity.value = 0;
+  };
+
   return (
     <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
+      headerBackgroundColor={{ light: backgroundColor, dark: backgroundColor }}
       headerImage={
         <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+          source={require("@/assets/images/catch.webp")}
+          style={{ height: "100%", width: "100%", alignSelf: "center" }}
+          contentFit="cover"
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+      }
+    >
+      <View
+        style={{
+          height: "100%",
+          gap: 8,
+          alignItems: "center",
+        }}
+      >
+        <View style={{ flex: 1, justifyContent: "center" }}>
+          <Pressable
+            style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}
+            onPress={handleCatchPress}
+            disabled={isPending || !!data}
+          >
+            {data && (
+              <View
+                onLayout={() => {
+                  setTimeout(() => {
+                    animateSprite();
+                  }, 1000);
+                }}
+                style={{
+                  position: "absolute",
+                  transform: [{ translateY: "-50%" }],
+                }}
+              >
+                <Animated.View style={{ ...spriteAnimatedStyle }}>
+                  <Animated.Image
+                    source={{ uri: data.img }}
+                    style={{
+                      width: 240,
+                      height: 240,
+                    }}
+                  />
+                </Animated.View>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
+                <Animated.View
+                  style={{
+                    ...spriteOverlayAnimatedStyle,
+                  }}
+                >
+                  <Animated.Image
+                    source={{ uri: data.img }}
+                    style={{
+                      width: 240,
+                      height: 240,
+                      tintColor: "white",
+                    }}
+                  />
+                </Animated.View>
+
+                <Animated.View style={caughtTextAnimatedSyle}>
+                  <Animated.Text>{`Congratulations! You've caught a ${capitalizeFirstLetter(
+                    data?.name
+                  )}!`}</Animated.Text>
+                </Animated.View>
+              </View>
+            )}
+            <Animated.View style={animatedStyle}>
+              <Animated.Image
+                source={require("@/assets/images/ball.webp")}
+                style={{
+                  width: 240,
+                  height: 240,
+                  marginBottom: 16,
+                }}
+              />
+            </Animated.View>
+
+            <ThemedText
+              style={{
+                textAlign: "center",
+                opacity: !isPending && !data ? 1 : 0,
+              }}
+            >
+              Tap to catch
+            </ThemedText>
+          </Pressable>
+        </View>
+
+        <Animated.View style={catchBtnAnimatedStyle}>
+          <ThemedButton onPress={handleCatchAgainPress} disabled={!data}>
+            Catch again
+          </ThemedButton>
+        </Animated.View>
+      </View>
     </ParallaxScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
